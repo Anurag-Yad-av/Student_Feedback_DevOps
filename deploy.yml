@@ -1,0 +1,164 @@
+name: Student Feedback CI/CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+
+  # =========================
+  # CI PART 1 - BUILD
+  # =========================
+  build:
+    name: BUILD
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Prepare Build Directory
+        run: |
+          mkdir -p dist
+          cp index.html dist/
+          cp style.css dist/
+          cp script.js dist/
+
+      - name: Verify Build Files
+        run: |
+          test -f dist/index.html
+          test -f dist/style.css
+          test -f dist/script.js
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-feedback-build
+          path: dist/
+
+
+  # =========================
+  # CI PART 2 - TEST
+  # =========================
+  test:
+    name: TEST
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: student-feedback-build
+          path: dist
+
+      - name: Test Required Files
+        run: |
+          test -f dist/index.html
+          test -f dist/style.css
+          test -f dist/script.js
+
+      - name: Test HTML
+        run: |
+          grep -qi "<!DOCTYPE html>" dist/index.html
+          grep -q "style.css" dist/index.html
+          grep -q "script.js" dist/index.html
+
+      - name: Test Institute Email Classification
+        run: |
+          node <<'EOF'
+          const NIET_DOMAIN = "@niet.co.in";
+
+          function classifyEmail(email) {
+            const normalized = email.trim().toLowerCase();
+
+            return normalized.endsWith(NIET_DOMAIN)
+              ? "NIET Student"
+              : "External Institute";
+          }
+
+          const testCases = [
+            {
+              email: "student@niet.co.in",
+              expected: "NIET Student"
+            },
+            {
+              email: "student@NIET.CO.IN",
+              expected: "NIET Student"
+            },
+            {
+              email: "student@gmail.com",
+              expected: "External Institute"
+            },
+            {
+              email: "student@abcuniversity.edu",
+              expected: "External Institute"
+            }
+          ];
+
+          for (const test of testCases) {
+            const result = classifyEmail(test.email);
+
+            if (result !== test.expected) {
+              console.error(
+                `FAILED: ${test.email} -> ${result}`
+              );
+              process.exit(1);
+            }
+
+            console.log(
+              `PASSED: ${test.email} -> ${result}`
+            );
+          }
+          EOF
+
+      - name: Test JavaScript Syntax
+        run: |
+          node --check script.js
+
+      - name: TEST PASSED
+        run: echo "All CI tests passed successfully."
+
+
+  # =========================
+  # CD PART - DEPLOY
+  # =========================
+  deploy:
+    name: DEPLOY
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

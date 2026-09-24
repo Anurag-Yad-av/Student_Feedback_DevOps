@@ -1,148 +1,326 @@
-const form = document.getElementById("feedbackForm");
+// ===============================
+// PulsePoint Student Feedback
+// ===============================
+
+// NIET official/reference email domain
+const NIET_DOMAIN = "@niet.co.in";
+
+// Local storage key
+const STORAGE_KEY = "pulsepoint_feedback";
+
+// Get HTML elements
+const feedbackForm = document.getElementById("feedbackForm");
 const feedbackList = document.getElementById("feedbackList");
+const emptyState = document.getElementById("emptyState");
+const feedbackCount = document.getElementById("feedbackCount");
+const message = document.getElementById("message");
+const clearBtn = document.getElementById("clearBtn");
 
 
-// Load feedback when page opens
-document.addEventListener("DOMContentLoaded", displayFeedback);
+// ===============================
+// INSTITUTE CLASSIFICATION
+// ===============================
+
+function classifyEmail(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (normalizedEmail.endsWith(NIET_DOMAIN)) {
+    return "NIET Student";
+  }
+
+  return "External Institute";
+}
 
 
-// Submit feedback
-form.addEventListener("submit", function (event) {
+// ===============================
+// LOAD FEEDBACK
+// ===============================
 
-    event.preventDefault();
-
-    const name = document.getElementById("name").value.trim();
-    const course = document.getElementById("course").value;
-    const feedback = document.getElementById("feedback").value.trim();
-
-    const ratingElement =
-        document.querySelector(
-            'input[name="rating"]:checked'
-        );
-
-    if (!ratingElement) {
-        alert("Please select a rating.");
-        return;
-    }
-
-    const rating = Number(ratingElement.value);
+function getFeedback() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch (error) {
+    console.error("Unable to load feedback:", error);
+    return [];
+  }
+}
 
 
-    const feedbackData = {
+// ===============================
+// SAVE FEEDBACK
+// ===============================
 
-        name: name,
-
-        course: course,
-
-        rating: rating,
-
-        feedback: feedback,
-
-        date: new Date().toLocaleDateString()
-
-    };
+function saveFeedback(feedback) {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(feedback)
+  );
+}
 
 
-    // Get existing feedback
-    const existingFeedback =
-        JSON.parse(
-            localStorage.getItem("studentFeedback")
-        ) || [];
+// ===============================
+// DISPLAY FEEDBACK
+// ===============================
+
+function renderFeedback() {
+
+  const feedback = getFeedback();
+
+  feedbackList.innerHTML = "";
+
+  feedbackCount.textContent = feedback.length;
+
+  // Show empty state if there is no feedback
+  if (feedback.length === 0) {
+    emptyState.style.display = "block";
+    return;
+  }
+
+  emptyState.style.display = "none";
 
 
-    // Add new feedback
-    existingFeedback.unshift(feedbackData);
+  feedback.forEach((item) => {
+
+    const card = document.createElement("div");
+
+    card.className = "feedback-card";
 
 
-    // Store feedback
-    localStorage.setItem(
-        "studentFeedback",
-        JSON.stringify(existingFeedback)
+    // Institute badge
+    const instituteClass =
+      item.instituteType === "NIET Student"
+        ? "niet"
+        : "external";
+
+
+    card.innerHTML = `
+
+      <div class="feedback-card-top">
+
+        <div>
+
+          <h3>
+            ${escapeHTML(item.name)}
+          </h3>
+
+          <p class="email-line">
+            ${escapeHTML(item.email)}
+          </p>
+
+        </div>
+
+        <span class="institute-badge ${instituteClass}">
+          ${escapeHTML(item.instituteType)}
+        </span>
+
+      </div>
+
+
+      <div class="feedback-course">
+        ${escapeHTML(item.course)}
+      </div>
+
+
+      <p class="feedback-text">
+        ${escapeHTML(item.feedback)}
+      </p>
+
+
+      <div class="feedback-date">
+        ${escapeHTML(item.date)}
+      </div>
+
+    `;
+
+    feedbackList.appendChild(card);
+
+  });
+}
+
+
+// ===============================
+// HTML SECURITY
+// ===============================
+
+function escapeHTML(value) {
+
+  const div = document.createElement("div");
+
+  div.textContent = value;
+
+  return div.innerHTML;
+}
+
+
+// ===============================
+// FORM SUBMISSION
+// ===============================
+
+feedbackForm.addEventListener("submit", function (event) {
+
+  event.preventDefault();
+
+
+  // Get form values
+  const name =
+    document.getElementById("name").value.trim();
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const course =
+    document.getElementById("course").value;
+
+  const feedback =
+    document.getElementById("feedback").value.trim();
+
+
+  // Basic validation
+  if (!name || !email || !course || !feedback) {
+
+    showMessage(
+      "Please fill in all fields.",
+      "error"
     );
 
-
-    // Display feedback
-    displayFeedback();
-
-
-    // Reset form
-    form.reset();
+    return;
+  }
 
 
-    alert("Thank you! Your feedback has been submitted.");
+  // Browser email validation
+  const emailInput =
+    document.getElementById("email");
+
+  if (!emailInput.checkValidity()) {
+
+    showMessage(
+      "Please enter a valid email address.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  // Classify institute
+  const instituteType =
+    classifyEmail(email);
+
+
+  // Create feedback object
+  const newFeedback = {
+
+    name: name,
+
+    email: email,
+
+    course: course,
+
+    feedback: feedback,
+
+    instituteType: instituteType,
+
+    date: new Date().toLocaleString("en-IN")
+
+  };
+
+
+  // Get existing feedback
+  const feedbackData = getFeedback();
+
+
+  // Add newest feedback at the beginning
+  feedbackData.unshift(newFeedback);
+
+
+  // Save
+  saveFeedback(feedbackData);
+
+
+  // Show success message
+  showMessage(
+    `Feedback submitted successfully — ${instituteType}.`,
+    "success"
+  );
+
+
+  // Reset form
+  feedbackForm.reset();
+
+
+  // Refresh feedback cards
+  renderFeedback();
 
 });
 
 
-// Display feedback
-function displayFeedback() {
+// ===============================
+// MESSAGE FUNCTION
+// ===============================
 
-    const feedbackData =
-        JSON.parse(
-            localStorage.getItem("studentFeedback")
-        ) || [];
+function showMessage(text, type) {
 
+  message.textContent = text;
 
-    if (feedbackData.length === 0) {
-
-        feedbackList.innerHTML = `
-            <div class="feedback-card">
-                <h3>No feedback yet</h3>
-                <p>
-                    Be the first student to share your experience.
-                </p>
-            </div>
-        `;
-
-        return;
-    }
+  message.className = `message ${type}`;
 
 
-    feedbackList.innerHTML =
-        feedbackData.map(item => {
+  // Automatically remove message
+  setTimeout(() => {
 
-            const stars =
-                "★".repeat(item.rating) +
-                "☆".repeat(5 - item.rating);
+    message.textContent = "";
 
+    message.className = "message";
 
-            return `
+  }, 4000);
 
-                <div class="feedback-card">
-
-                    <h3>${escapeHTML(item.name)}</h3>
-
-                    <div class="course">
-                        ${escapeHTML(item.course)}
-                    </div>
-
-                    <div class="stars">
-                        ${stars}
-                    </div>
-
-                    <p>
-                        ${escapeHTML(item.feedback)}
-                    </p>
-
-                    <small>
-                        Submitted on ${item.date}
-                    </small>
-
-                </div>
-
-            `;
-
-        }).join("");
 }
 
 
-// Prevent HTML injection
-function escapeHTML(value) {
+// ===============================
+// CLEAR DEMO DATA
+// ===============================
 
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
+clearBtn.addEventListener("click", function () {
+
+  const feedback = getFeedback();
+
+  if (feedback.length === 0) {
+
+    showMessage(
+      "There is no feedback data to clear.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const confirmed = confirm(
+    "Are you sure you want to clear all feedback?"
+  );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  localStorage.removeItem(STORAGE_KEY);
+
+  renderFeedback();
+
+
+  showMessage(
+    "All demo feedback has been cleared.",
+    "success"
+  );
+
+});
+
+
+// ===============================
+// INITIAL LOAD
+// ===============================
+
+renderFeedback();
