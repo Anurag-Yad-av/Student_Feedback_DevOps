@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>StudentVoice | Feedback Portal</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">
+            Student<span>Voice</span>
+        </div>
+
+        <div class="nav-text">
+            Student Feedback Portal
+        </div>
+    </header>
+
+    <main>
+
+        <!-- Hero Section -->
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p class="tag">STUDENT EXPERIENCE</p>
+
+                <h1>
+                    Your feedback
+                    <span>shapes our future.</span>
+                </h1>
+
+                <p class="hero-description">
+                    Share your learning experience and help us create
+                    a better academic environment for every student.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- Feedback Form -->
+        <section class="feedback-section">
+
+            <div class="form-container">
+
+                <div class="section-heading">
+                    <p class="tag">SHARE YOUR EXPERIENCE</p>
+
+                    <h2>Student Feedback</h2>
+
+                    <p>
+                        Tell us about your course and learning experience.
+                    </p>
+                </div>
+
+
+                <form id="feedbackForm">
+
+                    <div class="form-group">
+
+                        <label for="name">
+                            Student Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="name"
+                            placeholder="Enter your full name"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="course">
+                            Course
+                        </label>
+
+                        <select id="course" required>
+
+                            <option value="">
+                                Select your course
+                            </option>
+
+                            <option value="B.Tech CSE">
+                                B.Tech CSE
+                            </option>
+
+                            <option value="B.Tech Data Science">
+                                B.Tech Data Science
+                            </option>
+
+                            <option value="B.Tech AI & ML">
+                                B.Tech AI & ML
+                            </option>
+
+                            <option value="BCA">
+                                BCA
+                            </option>
+
+                            <option value="MCA">
+                                MCA
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Course Rating
+                        </label>
+
+                        <div class="rating">
+
+                            <label>
+                                <input type="radio" name="rating" value="1" required>
+                                1
+                            </label>
+
+                            <label>
+                                <input type="radio" name="rating" value="2">
+                                2
+                            </label>
+
+                            <label>
+                                <input type="radio" name="rating" value="3">
+                                3
+                            </label>
+
+                            <label>
+                                <input type="radio" name="rating" value="4">
+                                4
+                            </label>
+
+                            <label>
+                                <input type="radio" name="rating" value="5">
+                                5
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="feedback">
+                            Your Feedback
+                        </label>
+
+                        <textarea
+                            id="feedback"
+                            rows="5"
+                            maxlength="300"
+                            placeholder="Tell us about your learning experience..."
+                            required
+                        ></textarea>
+
+                        <small>
+                            Maximum 300 characters
+                        </small>
+
+                    </div>
+
+
+                    <button type="submit">
+                        Submit Feedback →
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+
+        <!-- Submitted Feedback -->
+        <section class="feedback-list-section">
+
+            <div class="section-heading">
+
+                <p class="tag">COMMUNITY VOICE</p>
+
+                <h2>Recent Feedback</h2>
+
+            </div>
+
+            <div id="feedbackList" class="feedback-grid">
+
+                <!-- Feedback cards appear here -->
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        <p>
+            © 2026 StudentVoice • Built with HTML, CSS & JavaScript
+        </p>
+
+        <p>
+            Powered by GitHub Actions CI/CD
+        </p>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
